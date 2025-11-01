@@ -208,9 +208,5 @@
             ]
         ]
     ],
-    "dependencies": {
-        "Adafruit_SH110X": "latest",
-        "Adafruit_GFX": "latest",
-        "DHT-sensor-library": "latest"
-    }
+    "dependencies": {}
 }

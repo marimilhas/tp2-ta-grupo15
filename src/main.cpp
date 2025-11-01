@@ -4,8 +4,8 @@
 #include "Device.h"
 
 // ==================== CONFIGURACIÓN ====================
-const char *SSID = "Personal-647";
-const char *PASS = "PUW9aaYPUd";
+const char *SSID = "Wokwi-GUEST";
+const char *PASS = "";
 const char *BOT_TOKEN = "8306829882:AAFOVJIXxXQhbgHjnBWYxudMhXb0WbIE-74";
 const String CHAT_ID = "7965286702";
 const unsigned long TIEMPO_ESCANEO = 1000; 
@@ -81,17 +81,41 @@ void loop()
   // Verifica si hay datos nuevos en telegram cada 1 segundo
   if (millis() - tiempoAnterior > TIEMPO_ESCANEO)
   {
+    Serial.println("🔍 Buscando mensajes en Telegram...");
+
     int numerosMensajes = bot.getUpdates(bot.last_message_received + 1);
+    Serial.print("📊 Mensajes encontrados: ");
+    Serial.println(numerosMensajes);
 
     while (numerosMensajes)
     {
-      Serial.println("Comando recibido");
+      Serial.println("✅ Comando recibido - Procesando...");
+
+      // DEBUG: Mostrar información del mensaje
+      for (int i = 0; i < numerosMensajes; i++)
+      {
+        String chat_id = bot.messages[i].chat_id;
+        String text = bot.messages[i].text;
+        String from_name = bot.messages[i].from_name;
+
+        Serial.println("=== MENSAJE DETECTADO ===");
+        Serial.print("De: ");
+        Serial.println(from_name);
+        Serial.print("Chat ID: ");
+        Serial.println(chat_id);
+        Serial.print("Texto: ");
+        Serial.println(text);
+        Serial.println("========================");
+      }
+
       mensajesNuevos(numerosMensajes);
       numerosMensajes = bot.getUpdates(bot.last_message_received + 1);
     }
 
     tiempoAnterior = millis();
   }
+
+  delay(500); // Pequeño delay para no saturar
 }
 
 // ==================== MANEJO DE MENSAJES ====================
