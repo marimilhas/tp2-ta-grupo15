@@ -29,6 +29,8 @@ bool ledVerdeEstado = false;
 bool ledAzulEstado = false;
 
 // ==================== DECLARACIONES DE FUNCIONES ====================
+void mostrarTeclado(String chat_id);
+void ocultarTeclado(String chat_id);
 void mensajesNuevos(int numerosMensajes);
 void comandoDisplay(String chat_id, String text);
 void mostrarMensajeInicial();
@@ -71,43 +73,27 @@ void setup()
   Serial.print("\nConectado a la red wifi. Dirección IP: ");
   Serial.println(WiFi.localIP());
 
-  // Mensaje de inicio
-  bot.sendMessage(CHAT_ID, "✅ Sistema ESP32 iniciado correctamente\nIP: " + WiFi.localIP().toString(), "");
+  String inicioMsg = "🤖 *ESP32 iniciado correctamente*\n\n";
+  inicioMsg += "🌐 IP: " + WiFi.localIP().toString() + "\n";
+  inicioMsg += "Escribe /start o usa los botones para comenzar";
+
+  bot.sendMessage(CHAT_ID, inicioMsg, "Markdown");
+  mostrarTeclado(CHAT_ID);
 }
 
 // ==================== LOOP PRINCIPAL ====================
 void loop()
 {
-  // Verifica si hay datos nuevos en telegram cada 1 segundo
   if (millis() - tiempoAnterior > TIEMPO_ESCANEO)
   {
-    Serial.println("🔍 Buscando mensajes en Telegram...");
+    // Serial.println("\n🔍 Buscando mensajes en Telegram...");
 
     int numerosMensajes = bot.getUpdates(bot.last_message_received + 1);
-    Serial.print("📊 Mensajes encontrados: ");
-    Serial.println(numerosMensajes);
+    // Serial.print("📊 Mensajes encontrados: ");
+    // Serial.println(numerosMensajes);
 
     while (numerosMensajes)
     {
-      Serial.println("✅ Comando recibido - Procesando...");
-
-      // DEBUG: Mostrar información del mensaje
-      for (int i = 0; i < numerosMensajes; i++)
-      {
-        String chat_id = bot.messages[i].chat_id;
-        String text = bot.messages[i].text;
-        String from_name = bot.messages[i].from_name;
-
-        Serial.println("=== MENSAJE DETECTADO ===");
-        Serial.print("De: ");
-        Serial.println(from_name);
-        Serial.print("Chat ID: ");
-        Serial.println(chat_id);
-        Serial.print("Texto: ");
-        Serial.println(text);
-        Serial.println("========================");
-      }
-
       mensajesNuevos(numerosMensajes);
       numerosMensajes = bot.getUpdates(bot.last_message_received + 1);
     }
@@ -115,7 +101,7 @@ void loop()
     tiempoAnterior = millis();
   }
 
-  delay(500); // Pequeño delay para no saturar
+  delay(500); 
 }
 
 // ==================== MANEJO DE MENSAJES ====================
@@ -127,14 +113,14 @@ void mensajesNuevos(int numerosMensajes)
     String text = bot.messages[i].text;
     String from_name = bot.messages[i].from_name;
 
-    Serial.println("Mensaje de " + from_name + ": " + text);
+    Serial.println("\nMensaje de " + from_name + ": " + text);
 
     // COMANDO /start
-    if (text == "/start")
+    if (text == "/start" || text == "Menú principal")
     {
       String welcome = "¡Hola " + from_name + "! 👋\n";
-      welcome += "Sistema ESP32 Control Bot\n\n";
-      welcome += "Comandos disponibles:\n";
+      welcome += "🤖 *ESP32 Control Bot*\n\n";
+      welcome += "Usa los botones o escribe comandos:\n";
       welcome += "💡 /led23on - LED verde ON\n";
       welcome += "💡 /led23off - LED verde OFF\n";
       welcome += "💡 /led2on - LED azul ON\n";
@@ -146,7 +132,8 @@ void mensajesNuevos(int numerosMensajes)
       welcome += "📟 /displaypote - Mostrar potenciómetro\n";
       welcome += "📟 /displaydht - Mostrar sensor DHT22\n";
 
-      bot.sendMessage(chat_id, welcome, "");
+      bot.sendMessage(chat_id, welcome, "Markdown");
+      mostrarTeclado(chat_id);
     }
 
     // COMANDOS LED
@@ -154,29 +141,25 @@ void mensajesNuevos(int numerosMensajes)
     {
       digitalWrite(LED_VERDE, HIGH);
       ledVerdeEstado = true;
-      bot.sendMessage(chat_id, "✅ LED VERDE ENCENDIDO", "");
-      mostrarEstadoLedDisplay();
+      bot.sendMessage(chat_id, "💚 LED VERDE ENCENDIDO", "");
     }
     else if (text == "/led23off")
     {
       digitalWrite(LED_VERDE, LOW);
       ledVerdeEstado = false;
-      bot.sendMessage(chat_id, "✅ LED VERDE APAGADO", "");
-      mostrarEstadoLedDisplay();
+      bot.sendMessage(chat_id, "💚 LED VERDE APAGADO", "");
     }
     else if (text == "/led2on")
     {
       digitalWrite(LED_AZUL, HIGH);
       ledAzulEstado = true;
-      bot.sendMessage(chat_id, "✅ LED AZUL ENCENDIDO", "");
-      mostrarEstadoLedDisplay();
+      bot.sendMessage(chat_id, "💙 LED AZUL ENCENDIDO", "");
     }
     else if (text == "/led2off")
     {
       digitalWrite(LED_AZUL, LOW);
       ledAzulEstado = false;
-      bot.sendMessage(chat_id, "✅ LED AZUL APAGADO", "");
-      mostrarEstadoLedDisplay();
+      bot.sendMessage(chat_id, "💙 LED AZUL APAGADO", "");
     }
 
     // COMANDO DHT22 
@@ -192,7 +175,7 @@ void mensajesNuevos(int numerosMensajes)
       else
       {
         String respuesta = "🌡️ *Lectura DHT22*\n\n";
-        respuesta += "📊 Temperatura: " + String(temperatura, 1) + "°C\n";
+        respuesta += "🔥 Temperatura: " + String(temperatura, 1) + "°C\n";
         respuesta += "💧 Humedad: " + String(humedad, 1) + "%";
         bot.sendMessage(chat_id, respuesta, "Markdown");
       }
@@ -228,7 +211,7 @@ void mensajesNuevos(int numerosMensajes)
         {
           String respuesta = "☁️ *Datos enviados a IoT*\n\n";
           respuesta += "📊 Temperatura: " + String(temperatura, 1) + "°C\n";
-          respuesta += "💧 Humedad: " + String(humedad, 1) + "%\n";
+          respuesta += "💧 Humedad: " + String(humedad, 1) + "%\n\n";
           respuesta += "✅ Datos enviados correctamente";
           bot.sendMessage(chat_id, respuesta, "Markdown");
         }
@@ -244,25 +227,45 @@ void mensajesNuevos(int numerosMensajes)
     {
       comandoDisplay(chat_id, text);
     }
-    
+
+    // else if (text == "Ocultar teclado")
+    // {
+    //   ocultarTeclado(chat_id);
+    //   bot.sendMessage(chat_id, "⌨️ Teclado ocultado. Escribe /start para mostrarlo de nuevo.", "");
+    // }
+
     // COMANDO NO RECONOCIDO
     else
     {
       bot.sendMessage(chat_id, "❌ Comando no reconocido. Use /start para ver comandos.", "");
+      mostrarTeclado(chat_id);
     }
   }
 }
 
+// ==================== TECLADO PERSONALIZADO ====================
+String keyboardJson = "[[\"/led23on\", \"/led23off\"], [\"/led2on\", \"/led2off\"], "
+                      "[\"/dht22\", \"/pote\"], [\"/displayled\", \"/displaydht\", \"/displaypote\"], "
+                      "[\"/platiot\", \"/start\"]]";
+
+void mostrarTeclado(String chat_id)
+{
+  bot.sendMessageWithReplyKeyboard(chat_id, "", "", keyboardJson, true);
+}
+
+// void ocultarTeclado(String chat_id)
+// {
+//   bot.sendMessageWithReplyKeyboard(chat_id, "Teclado ocultado", "", "[[\"Ocultar teclado\"]]", true);
+// }
+
 // ==================== FUNCIONES DISPLAY ====================
 void mostrarMensajeInicial()
 {
-  String mensaje = "SISTEMA ESP32\n";
+  String mensaje = "ESP32\n";
   mensaje += "Telegram Bot\n";
   mensaje += "------------\n";
   mensaje += "Esperando\n";
   mensaje += "comandos...\n";
-  mensaje += "------------\n";
-  mensaje += "IP: " + WiFi.localIP().toString();
 
   _device.showDisplay(mensaje.c_str());
 }
@@ -347,7 +350,7 @@ void mostrarComandoNoIdentificado(String comando)
   String mensaje = "=== COMANDO ERROR ===\n\n";
   mensaje += "Comando no reconocido:\n";
   mensaje += "> " + comando + "\n\n";
-  mensaje += "Comandos válidos:\n";
+  mensaje += "Comandos validos:\n";
   mensaje += "> led, pote, dht";
 
   _device.showDisplay(mensaje.c_str());
@@ -357,7 +360,7 @@ void mostrarComandoNoIdentificado(String comando)
 bool enviarDatosIoT(float temperatura, float humedad)
 {
   // Simular envío a plataforma IoT
-  Serial.println("📡 Enviando a IoT:");
+  Serial.println("\n📡 Enviando a IoT:");
   Serial.println("   Temperatura: " + String(temperatura) + "°C");
   Serial.println("   Humedad: " + String(humedad) + "%");
 
