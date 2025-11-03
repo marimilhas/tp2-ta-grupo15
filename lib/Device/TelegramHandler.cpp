@@ -12,16 +12,6 @@ TelegramHandler::TelegramHandler(UniversalTelegramBot* botInstance, Device* devi
     ledAzulEstado = false;
 }
 
-// ==================== Mostrar mensaje inicial en display ====================
-void TelegramHandler::mostrarMensajeInicial() {
-    String mensaje = "ESP32\n";
-    mensaje += "Telegram Bot\n";
-    mensaje += "------------\n";
-    mensaje += "Esperando\n";
-    mensaje += "comandos...\n";
-    device->showDisplay(mensaje.c_str());
-}
-
 // ==================== Procesar mensajes de Telegram ====================
 void TelegramHandler::procesarMensajes() {
     int numerosMensajes = bot->getUpdates(bot->last_message_received + 1);
@@ -32,6 +22,12 @@ void TelegramHandler::procesarMensajes() {
 }
 
 // ==================== Manejo de mensajes ====================
+void TelegramHandler::mandarMensajeInicial(String chat_id, String ipAddress)
+{
+    bot->sendMessage(chat_id, "🤖 ESP32 iniciado correctamente\n🌐 IP: " + ipAddress, "Markdown");
+
+}
+
 void TelegramHandler::mensajesNuevos(int numerosMensajes) {
     for (int i = 0; i < numerosMensajes; i++) {
         String chat_id = bot->messages[i].chat_id;
@@ -44,7 +40,6 @@ void TelegramHandler::mensajesNuevos(int numerosMensajes) {
         if (text == "/start" || text == "Menú principal") {
             String welcome = "¡Hola " + from_name + "! 👋\n";
             welcome += "🤖 *ESP32 Control Bot*\n\n";
-            welcome += "Usa los botones o escribe comandos:\n";
             welcome += "💡 /led23on - LED verde ON\n";
             welcome += "💡 /led23off - LED verde OFF\n";
             welcome += "💡 /led2on - LED azul ON\n";
@@ -148,17 +143,40 @@ void TelegramHandler::mostrarTeclado(String chat_id) {
     String keyboardJson = "[[\"/led23on\", \"/led23off\"], [\"/led2on\", \"/led2off\"], "
                           "[\"/dht22\", \"/pote\"], [\"/displayled\", \"/displaydht\", \"/displaypote\"], "
                           "[\"/platiot\", \"/start\"]]";
-    bot->sendMessageWithReplyKeyboard(chat_id, "", "", keyboardJson, true);
+    bot->sendMessageWithReplyKeyboard(chat_id, "Usa los botones o escribe un comando:", "", keyboardJson, true);
 }
 
 // ==================== FUNCIONES DISPLAY ====================
+void TelegramHandler::mostrarMensajeInicialDisplay()
+{
+    String mensaje = "ESP32\n";
+    mensaje += "Telegram Bot\n";
+    mensaje += "------------\n";
+    mensaje += "Esperando\n";
+    mensaje += "comandos...\n";
+    device->showDisplay(mensaje.c_str());
+}
+
 void TelegramHandler::comandoDisplay(String chat_id, String text) {
     String comando = text.substring(8);
 
-    if (comando == "led") mostrarEstadoLedDisplay();
-    else if (comando == "pote") mostrarEstadoPoteDisplay();
-    else if (comando == "dht" || comando == "dht22") mostrarEstadoDHTDisplay();
-    else {
+    if (comando == "led")
+    {
+        bot->sendMessage(chat_id, "📟 Estado de los led mostrado en el display", "");
+        mostrarEstadoLedDisplay();
+    }
+    else if (comando == "pote")
+    {
+        bot->sendMessage(chat_id, "📟 Estado del potenciómetro mostrado en el display", "");
+        mostrarEstadoPoteDisplay();
+    }
+    else if (comando == "dht" || comando == "dht22")
+    {
+        bot->sendMessage(chat_id, "📟 Estado del sensor DHT22 mostrado en el display", "");
+        mostrarEstadoDHTDisplay();
+    }
+    else
+    {
         mostrarComandoNoIdentificado(comando);
         bot->sendMessage(chat_id, "❌ Comando display no reconocido: " + comando, "");
     }

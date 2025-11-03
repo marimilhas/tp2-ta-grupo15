@@ -39,15 +39,14 @@ void setup() {
     digitalWrite(LED_VERDE, LOW);
     digitalWrite(LED_AZUL, LOW);
 
-    // Inicializar display y sensor
     device.begin();
-    telegram.mostrarMensajeInicial();  // Muestra mensaje inicial en display
+    telegram.mostrarMensajeInicialDisplay();  
 
     // Conectar WiFi
     Serial.print("Conectando a la red ");
     Serial.println(SSID);
     WiFi.begin(SSID, PASS);
-    secured_client.setInsecure();  // Para pruebas en Wokwi
+    secured_client.setInsecure();  
 
     while (WiFi.status() != WL_CONNECTED) {
         Serial.print(".");
@@ -56,17 +55,14 @@ void setup() {
 
     Serial.println("\nConectado a la red WiFi. Dirección IP: " + WiFi.localIP().toString());
 
-    // Mensaje inicial en Telegram
-    bot.sendMessage(CHAT_ID, "🤖 ESP32 iniciado correctamente\n🌐 IP: " + WiFi.localIP().toString(), "Markdown");
-
-    // Mostrar teclado inicial
+    telegram.mandarMensajeInicial(CHAT_ID, WiFi.localIP().toString());
     telegram.mostrarTeclado(CHAT_ID);
 }
 
 // ==================== LOOP ====================
 void loop() {
     if (millis() - tiempoAnterior > TIEMPO_ESCANEO) {
-        telegram.procesarMensajes();  // Todo el manejo de mensajes se hace dentro de la librería
+        telegram.procesarMensajes();  // Librería encargada de procesar mensajes de Telegram
         tiempoAnterior = millis();
     }
 

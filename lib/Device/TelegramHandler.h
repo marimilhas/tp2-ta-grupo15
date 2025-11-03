@@ -18,9 +18,10 @@ public:
     TelegramHandler(UniversalTelegramBot* botInstance, Device* deviceInstance,
                     int ledVerde, int ledAzul, int potPin);
 
-    void procesarMensajes();       // Llama a getUpdates y procesa mensajes
+    void procesarMensajes();       
     void mostrarTeclado(String chat_id);
-    void mostrarMensajeInicial();
+    void mandarMensajeInicial(String chat_id, String ipAddress);
+    void mostrarMensajeInicialDisplay();
 
 private:
     void mensajesNuevos(int numerosMensajes);
