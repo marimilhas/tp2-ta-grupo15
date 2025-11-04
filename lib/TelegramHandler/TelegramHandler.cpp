@@ -1,5 +1,10 @@
 #include "TelegramHandler.h"
 #include <Arduino.h>
+#include <WiFi.h>
+#include <HTTPClient.h>
+
+#define THINGSPEAK_API_KEY "OR9FHB2QZL1T73B5"
+#define THINGSPEAK_URL "http://api.thingspeak.com/update"
 
 TelegramHandler::TelegramHandler(UniversalTelegramBot* botInstance, Device* deviceInstance,
                                  int ledVerde, int ledAzul, int potPin) {
@@ -48,8 +53,8 @@ void TelegramHandler::mensajesNuevos(int numerosMensajes) {
             welcome += "📊 /pote - Valor potenciómetro\n";
             welcome += "☁️ /platiot - Enviar datos IoT\n";
             welcome += "📟 /displayled - Mostrar estado LEDs\n";
-            welcome += "📟 /displaypote - Mostrar potenciómetro\n";
-            welcome += "📟 /displaydht - Mostrar sensor DHT22\n";
+            welcome += "📟 /displaypote - Mostrar estado potenciómetro\n";
+            welcome += "📟 /displaydht - Mostrar estado sensor DHT22\n";
 
             bot->sendMessage(chat_id, welcome, "Markdown");
             mostrarTeclado(chat_id);
@@ -233,6 +238,34 @@ bool TelegramHandler::enviarDatosIoT(float temperatura, float humedad) {
     Serial.println("   Temperatura: " + String(temperatura) + "°C");
     Serial.println("   Humedad: " + String(humedad) + "%");
 
-    delay(500);  // Simular tiempo de envío
-    return true;
+    device->showDisplay("Enviando datos\na IoT...");
+
+    if (WiFi.status() == WL_CONNECTED) {
+        HTTPClient http;
+        String url = String("http://api.thingspeak.com/update") +
+                     "?api_key=" + THINGSPEAK_API_KEY +
+                     "&field1=" + String(humedad) +
+                     "&field2=" + String(temperatura);
+
+        Serial.println("   URL: " + url);
+
+        http.begin(url);
+        int httpCode = http.GET();
+        Serial.println("   Código HTTP: " + String(httpCode));
+
+        if (httpCode > 0) {
+            String payload = http.getString();
+            Serial.println("   Respuesta: " + payload);
+            device->showDisplay("Datos enviados\ncorrectamente a IoT");
+
+        } else {
+            Serial.println("   ❌ Error en GET: " + String(http.errorToString(httpCode)));
+        }
+
+        http.end();
+        return (httpCode == 200);
+    } else {
+        Serial.println("❌ No hay conexión WiFi");
+        return false;
+    }
 }
